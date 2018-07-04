@@ -27,6 +27,7 @@ import_opp_target(INET ${INET_DIR}/src/Makefile)
 
 option(WITH_SIMULTE "Build Artery with SimuLTE integration" OFF)
 if(WITH_SIMULTE)
+    message(SEND_ERROR "SimuLTE is not yet compatible with INET4. Please turn off WITH_SIMULTE.")
     find_path(SimuLTE_DIR NAMES src/package.ned PATHS extern/simulte DOC "SimuLTE root directory")
     import_opp_target(lte ${SimuLTE_DIR}/src/Makefile)
 else()
