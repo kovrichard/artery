@@ -116,3 +116,7 @@ endif()
 if(WITH_TESTBED)
     add_subdirectory(testbed)
 endif()
+
+if(WITH_UBLOXRADIO)
+    add_subdirectory(inet/ubloxradio)
+endif()
