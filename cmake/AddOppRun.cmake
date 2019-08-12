@@ -85,7 +85,11 @@ macro(add_opp_run _name)
 
     _opp_run_command(${_target} _exec)
 
-    set(RUN_FLAGS "" CACHE STRING "Flags appended to run command (and debug)")
+    if(WITH_CMDENV) ## mert cache ezert felrevezeto
+        set(RUN_FLAGS "-uCmdenv" CACHE STRING "Flags appended to run command (and debug)")
+    else()
+        set(RUN_FLAGS "" CACHE STRING "Flags appended to run command (and debug)")
+    endif()
     string(REPLACE " " ";" _run_flags "${RUN_FLAGS}")
     add_custom_target(run_${_name}
         COMMAND ${_exec} ${_config} ${_run_flags}

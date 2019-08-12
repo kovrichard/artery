@@ -67,6 +67,7 @@ option(WITH_STORYBOARD "Build Artery with storyboard feature" ON)
 option(WITH_UBLOXRADIO "Build Artery with new ublox radio layer" ON)
 option(WITH_TRANSFUSION "Build Artery with transfusion feature" OFF)
 option(WITH_TESTBED "Build Artery with testbed feature" OFF)
+option(WITH_CMDENV "Using Artery with cmdenv" OFF)
 
 add_subdirectory(src/artery)
 add_subdirectory(src/traci)
