@@ -221,11 +221,117 @@ vanetza::asn1::Cpm createCollectivePerceptionMessage(const VehicleDataProvider& 
 			VehicleLengthConfidenceIndication_noTrailerPresent;
 	bvc.vehicleWidth = VehicleWidth_unavailable;*/
 
+	CpmManagementContainer_t& managementContainer = cpm.cpmParameters.managementContainer;
 
+	managementContainer.stationType = StationType_unknown;
+	managementContainer.referencePosition.latitude = Latitude_oneMicrodegreeNorth;
+	managementContainer.referencePosition.longitude = Longitude_oneMicrodegreeEast;
+	managementContainer.referencePosition.positionConfidenceEllipse.semiMajorConfidence = SemiAxisLength_oneCentimeter;
+	managementContainer.referencePosition.positionConfidenceEllipse.semiMinorConfidence = SemiAxisLength_oneCentimeter;
+	managementContainer.referencePosition.positionConfidenceEllipse.semiMajorOrientation = HeadingValue_wgs84North;
+	managementContainer.referencePosition.altitude.altitudeValue = AltitudeValue_referenceEllipsoidSurface;
+	managementContainer.referencePosition.altitude.altitudeConfidence = AltitudeConfidence_alt_000_01;
+
+	cpm.cpmParameters.stationDataContainer = vanetza::asn1::allocate<StationDataContainer_t>();
+	StationDataContainer_t*& stationDataContainer = cpm.cpmParameters.stationDataContainer;
+	stationDataContainer->present = StationDataContainer_PR_originatingVehicleContainer;
+	OriginatingVehicleContainer_t& originatingVehicleContainer = stationDataContainer->choice.originatingVehicleContainer;
+	originatingVehicleContainer.heading.headingValue = HeadingValue_wgs84North;
+	originatingVehicleContainer.heading.headingConfidence = HeadingConfidence_equalOrWithinOneDegree;
+	originatingVehicleContainer.speed.speedValue = SpeedValueExtended_oneCentimeterPerSec;
+	originatingVehicleContainer.speed.speedConfidence = SpeedConfidence_equalOrWithinOneCentimeterPerSec;
+
+	originatingVehicleContainer.vehicleOrientationAngle = vanetza::asn1::allocate<WGS84Angle_t>();
+	originatingVehicleContainer.vehicleOrientationAngle->value = WGS84AngleValue_wgs84North;
+	originatingVehicleContainer.vehicleOrientationAngle->confidence = AngleConfidence_zeroPointOneDegree;
+	originatingVehicleContainer.driveDirection = DriveDirection_forward;
+
+	originatingVehicleContainer.longitudinalAcceleration = vanetza::asn1::allocate<LongitudinalAcceleration_t>();
+	originatingVehicleContainer.longitudinalAcceleration->longitudinalAccelerationValue = LongitudinalAccelerationValue_pointOneMeterPerSecSquaredForward;
+	originatingVehicleContainer.longitudinalAcceleration->longitudinalAccelerationConfidence = AccelerationConfidence_pointOneMeterPerSecSquared;
+	
+	originatingVehicleContainer.lateralAcceleration = vanetza::asn1::allocate<LateralAcceleration_t>();
+	originatingVehicleContainer.lateralAcceleration->lateralAccelerationValue = LateralAccelerationValue_pointOneMeterPerSecSquaredToLeft;
+	originatingVehicleContainer.lateralAcceleration->lateralAccelerationConfidence = AccelerationConfidence_pointOneMeterPerSecSquared;
+
+	originatingVehicleContainer.yawRate = vanetza::asn1::allocate<YawRate_t>();
+	originatingVehicleContainer.yawRate->yawRateValue = YawRateValue_straight;
+	originatingVehicleContainer.yawRate->yawRateConfidence = YawRateConfidence_degSec_000_01;
+
+	//cpm.cpmParameters.sensorInformationContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__sensorInformationContainer>();
+	//cpm.cpmParameters.sensorInformationContainer->list
+
+	cpm.cpmParameters.sensorInformationContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__sensorInformationContainer>();
+
+	SensorInformation* sensorInformation = vanetza::asn1::allocate<SensorInformation>();
+	sensorInformation->id = 0;
+	sensorInformation->type = SensorType_radar;
+	sensorInformation->detectionArea.present = DetectionArea_PR_stationarySensorCircular;
+	AreaCircular_t& stationarySensorCircular = sensorInformation->detectionArea.choice.stationarySensorCircular;
+	stationarySensorCircular.nodeCenterPoint = vanetza::asn1::allocate<OffsetPoint>();
+	stationarySensorCircular.nodeCenterPoint->nodeOffsetPointxy.present = NodeOffsetPointXYEU_PR_node_XY1;
+	stationarySensorCircular.nodeCenterPoint->nodeOffsetPointxy.choice.node_XY1.x = 1;
+	stationarySensorCircular.nodeCenterPoint->nodeOffsetPointxy.choice.node_XY1.y = 1;
+	stationarySensorCircular.radius = Radius_oneMeter;
+	sensorInformation->freeSpaceConfidence = vanetza::asn1::allocate<FreeSpaceConfidence_t>();
+	*(sensorInformation->freeSpaceConfidence) = FreeSpaceConfidence_unitConfidenceLevel;
+
+	ASN_SEQUENCE_ADD(cpm.cpmParameters.sensorInformationContainer, sensorInformation);
+
+	cpm.cpmParameters.perceivedObjectContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__perceivedObjectContainer>();
+
+	for (int i = 0; i < 35; ++i) {
+	
+		PerceivedObject* perceivedObject = vanetza::asn1::allocate<PerceivedObject>();
+
+		perceivedObject->objectID = 0;
+
+		Identifier_t* identifier = vanetza::asn1::allocate<Identifier_t>();
+		*identifier = 1;
+		ASN_SEQUENCE_ADD(perceivedObject->sensorID, identifier);
+
+		perceivedObject->timeOfMeasurement = TimeOfMeasurement_oneMilliSecond;
+		perceivedObject->objectAge = vanetza::asn1::allocate<ObjectAge_t>();
+		*(perceivedObject->objectAge) = ObjectAge_oneMiliSec;
+
+		perceivedObject->objectConfidence = vanetza::asn1::allocate<ObjectConfidence_t>();
+		*(perceivedObject->objectConfidence) = 100;
+
+		perceivedObject->xDistance.value = DistanceValue_zeroPointZeroOneMeter;
+		perceivedObject->xDistance.confidence = DistanceConfidence_zeroPointZeroOneMeter;
+		perceivedObject->yDistance.value = DistanceValue_zeroPointZeroOneMeter;
+		perceivedObject->yDistance.confidence = DistanceConfidence_zeroPointZeroOneMeter;
+		perceivedObject->xSpeed.value = SpeedValue_oneCentimeterPerSec;
+		perceivedObject->xSpeed.confidence = SpeedConfidence_equalOrWithinOneCentimeterPerSec;
+		perceivedObject->ySpeed.value = SpeedValue_oneCentimeterPerSec;
+		perceivedObject->ySpeed.confidence = SpeedConfidence_equalOrWithinOneCentimeterPerSec;
+		perceivedObject->xAcceleration = vanetza::asn1::allocate<LongitudinalAcceleration_t>();
+		perceivedObject->xAcceleration->longitudinalAccelerationValue = LongitudinalAccelerationValue_pointOneMeterPerSecSquaredForward;
+		perceivedObject->xAcceleration->longitudinalAccelerationConfidence = LongitudinalLanePositionConfidence_zeroPointZeroOneMeter;
+		perceivedObject->objectRefPoint = ObjectRefPoint_mid;
+		perceivedObject->dynamicStatus = vanetza::asn1::allocate<DynamicStatus_t>();
+		*(perceivedObject->dynamicStatus) = DynamicStatus_dynamic;
+		
+		perceivedObject->classification = vanetza::asn1::allocate<ObjectClassDescription_t>();
+
+		for (int j = 0; j < 2; ++j) {
+
+			ObjectClass* objectClass = vanetza::asn1::allocate<ObjectClass>();
+			objectClass->confidence = 50;
+			objectClass->Class.present = ObjectClass__class_PR_vehicle;
+			objectClass->Class.choice.vehicle.confidence = vanetza::asn1::allocate<ClassConfidence_t>();
+			*(objectClass->Class.choice.vehicle.confidence) = 100;
+			objectClass->Class.choice.vehicle.type = vanetza::asn1::allocate<long>();
+			*(objectClass->Class.choice.vehicle.type);
+			ASN_SEQUENCE_ADD(perceivedObject->classification, objectClass);
+		}
+
+		ASN_SEQUENCE_ADD(cpm.cpmParameters.perceivedObjectContainer, perceivedObject);
+	}
 
 	std::string error;
 	if (!message.validate(error)) {
-		throw cRuntimeError("Invalid High Frequency CAM: %s", error.c_str());
+		throw cRuntimeError("Invalid CPM: %s", error.c_str());
 	}
 
 	return message;
