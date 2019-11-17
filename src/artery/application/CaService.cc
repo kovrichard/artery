@@ -136,7 +136,7 @@ void CaService::sendCam(const SimTime& T_now)
 	mLastCamSpeed = mVehicleDataProvider->speed();
 	mLastCamHeading = mVehicleDataProvider->heading();
 	mLastCamTimestamp = T_now;
-	if (T_now - mLastLowCamTimestamp >= artery::simtime_cast(scLowFrequencyContainerInterval)) {
+	if (/*T_now - mLastLowCamTimestamp >= artery::simtime_cast(scLowFrequencyContainerInterval)*/true) {
 		addLowFrequencyContainer(cam);
 		mLastLowCamTimestamp = T_now;
 	}
@@ -225,6 +225,40 @@ vanetza::asn1::Cam createCooperativeAwarenessMessage(const VehicleDataProvider& 
 			VehicleLengthConfidenceIndication_noTrailerPresent;
 	bvc.vehicleWidth = VehicleWidth_unavailable;
 
+//en voltam
+	bvc.accelerationControl = vanetza::asn1::allocate<AccelerationControl_t>();
+	bvc.accelerationControl->buf = static_cast<uint8_t*>(vanetza::asn1::allocate(1));
+	
+	assert(nullptr != bvc.accelerationControl->buf);
+	bvc.accelerationControl->size = 1;
+	bvc.accelerationControl->buf[0] |= 1 << (7 - ExteriorLights_daytimeRunningLightsOn);
+
+	bvc.lanePosition = vanetza::asn1::allocate<LanePosition_t>();
+	*(bvc.lanePosition) = LanePosition_offTheRoad;
+
+	bvc.steeringWheelAngle = vanetza::asn1::allocate<SteeringWheelAngle_t>();
+	bvc.steeringWheelAngle->steeringWheelAngleValue = SteeringWheelAngleValue_straight;
+	bvc.steeringWheelAngle->steeringWheelAngleConfidence = SteeringWheelAngleConfidence_equalOrWithinOnePointFiveDegree;
+
+	bvc.lateralAcceleration = vanetza::asn1::allocate<LateralAcceleration_t>();
+	bvc.lateralAcceleration->lateralAccelerationValue = LateralAccelerationValue_pointOneMeterPerSecSquaredToLeft;
+	bvc.lateralAcceleration->lateralAccelerationConfidence = AccelerationConfidence_pointOneMeterPerSecSquared;
+
+	bvc.verticalAcceleration = vanetza::asn1::allocate<VerticalAcceleration_t>();
+	bvc.verticalAcceleration->verticalAccelerationValue = VerticalAccelerationValue_pointOneMeterPerSecSquaredDown;
+	bvc.verticalAcceleration->verticalAccelerationConfidence = AccelerationConfidence_pointOneMeterPerSecSquared;
+	
+	bvc.performanceClass = vanetza::asn1::allocate<PerformanceClass_t>();
+	*(bvc.performanceClass) = PerformanceClass_performanceClassA;
+
+	bvc.cenDsrcTollingZone = vanetza::asn1::allocate<CenDsrcTollingZone_t>();
+	bvc.cenDsrcTollingZone->protectedZoneLatitude = Latitude_oneMicrodegreeNorth;
+	bvc.cenDsrcTollingZone->protectedZoneLongitude = Longitude_oneMicrodegreeEast;
+
+	bvc.cenDsrcTollingZone->cenDsrcTollingZoneID = vanetza::asn1::allocate<CenDsrcTollingZoneID_t>();
+	*(bvc.cenDsrcTollingZone->cenDsrcTollingZoneID) = 0;
+//eddig
+
 	std::string error;
 	if (!message.validate(error)) {
 		throw cRuntimeError("Invalid High Frequency CAM: %s", error.c_str());
@@ -241,10 +275,23 @@ void addLowFrequencyContainer(vanetza::asn1::Cam& message)
 	BasicVehicleContainerLowFrequency& bvc = lfc->choice.basicVehicleContainerLowFrequency;
 	bvc.vehicleRole = VehicleRole_default;
 	bvc.exteriorLights.buf = static_cast<uint8_t*>(vanetza::asn1::allocate(1));
+	
 	assert(nullptr != bvc.exteriorLights.buf);
 	bvc.exteriorLights.size = 1;
 	bvc.exteriorLights.buf[0] |= 1 << (7 - ExteriorLights_daytimeRunningLightsOn);
 	// TODO: add pathHistory
+
+//sum pathHistory
+		for (int i = 0; i < 40; ++i) {
+			PathPoint* pathPoint = vanetza::asn1::allocate<PathPoint>();
+			pathPoint->pathDeltaTime = vanetza::asn1::allocate<PathDeltaTime_t>();
+			*(pathPoint->pathDeltaTime) = 0;
+			pathPoint->pathPosition.deltaLatitude = DeltaLatitude_unavailable;
+			pathPoint->pathPosition.deltaLongitude = DeltaLongitude_unavailable;
+			pathPoint->pathPosition.deltaAltitude = DeltaAltitude_unavailable;
+			ASN_SEQUENCE_ADD(&bvc.pathHistory, pathPoint);
+		}
+
 
 	std::string error;
 	if (!message.validate(error)) {
