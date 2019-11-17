@@ -28,22 +28,22 @@ class CpService : public ItsG5BaseService
 		bool checkHeadingDelta() const;
 		bool checkPositionDelta() const;
 		bool checkSpeedDelta() const;
-		void sendCam(const omnetpp::SimTime&);
-		omnetpp::SimTime genCamDcc();
+		void sendCpm(const omnetpp::SimTime&);
+		omnetpp::SimTime genCpmDcc();
 
 		const VehicleDataProvider* mVehicleDataProvider;
 		const Timer* mTimer;
-		artery::LocalDynamicMap* mLocalDynamicMap;
-		omnetpp::SimTime mGenCamMin;
-		omnetpp::SimTime mGenCamMax;
-		omnetpp::SimTime mGenCam;
-		unsigned mGenCamLowDynamicsCounter;
-		unsigned mGenCamLowDynamicsLimit;
-		Position mLastCamPosition;
-		vanetza::units::Velocity mLastCamSpeed;
-		vanetza::units::Angle mLastCamHeading;
-		omnetpp::SimTime mLastCamTimestamp;
-		omnetpp::SimTime mLastLowCamTimestamp;
+		//artery::LocalDynamicMap* mLocalDynamicMap;
+		omnetpp::SimTime mGenCpmMin;
+		omnetpp::SimTime mGenCpmMax;
+		omnetpp::SimTime mGenCpm;
+		//unsigned mGenCpmLowDynamicsCounter;
+		//unsigned mGenCpmLowDynamicsLimit;
+		Position mLastCpmPosition;
+		vanetza::units::Velocity mLastCpmSpeed;
+		vanetza::units::Angle mLastCpmHeading;
+		omnetpp::SimTime mLastCpmTimestamp;
+		//omnetpp::SimTime mLastLowCpmTimestamp;
 		vanetza::units::Angle mHeadingDelta;
 		vanetza::units::Length mPositionDelta;
 		vanetza::units::Velocity mSpeedDelta;
@@ -51,8 +51,10 @@ class CpService : public ItsG5BaseService
 		bool mFixedRate;
 };
 
-//vanetza::asn1::Cam createCooperativeAwarenessMessage(const VehicleDataProvider&, uint16_t genDeltaTime);
-//void addLowFrequencyContainer(vanetza::asn1::Cam&);
+vanetza::asn1::Cpm createCollectivePerceptionMessage(const VehicleDataProvider&, uint16_t genDeltaTime);
+
+//vanetza::asn1::Cpm createCooperativeAwarenessMessage(const VehicleDataProvider&, uint16_t genDeltaTime);
+//void addLowFrequencyContainer(vanetza::asn1::Cpm&);
 
 } // namespace artery
 
