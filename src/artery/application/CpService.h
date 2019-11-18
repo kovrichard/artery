@@ -44,6 +44,7 @@ class CpService : public ItsG5BaseService
 		vanetza::units::Angle mLastCpmHeading;
 		omnetpp::SimTime mLastCpmTimestamp;
 		//omnetpp::SimTime mLastLowCpmTimestamp;
+		omnetpp::SimTime mLastSensorInformationTimestamp;
 		vanetza::units::Angle mHeadingDelta;
 		vanetza::units::Length mPositionDelta;
 		vanetza::units::Velocity mSpeedDelta;
@@ -55,6 +56,7 @@ vanetza::asn1::Cpm createCollectivePerceptionMessage(const VehicleDataProvider&,
 
 //vanetza::asn1::Cpm createCooperativeAwarenessMessage(const VehicleDataProvider&, uint16_t genDeltaTime);
 //void addLowFrequencyContainer(vanetza::asn1::Cpm&);
+void addSensorInformationContainer(vanetza::asn1::Cpm&);
 
 } // namespace artery
 

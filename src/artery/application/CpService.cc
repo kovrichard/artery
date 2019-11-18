@@ -28,6 +28,9 @@ auto centimeter_per_second = vanetza::units::si::meter_per_second * boost::units
 static const simsignal_t scSignalCpmReceived = cComponent::registerSignal("CpmReceived");
 static const simsignal_t scSignalCpmSent = cComponent::registerSignal("CpmSent");
 
+static const auto scSensorInformationContainerInterval = std::chrono::milliseconds(1000);
+
+
 template<typename T, typename U>
 long round(const boost::units::quantity<T>& q, const U& u)
 {
@@ -137,6 +140,11 @@ void CpService::sendCpm(const SimTime& T_now)
 		mLastLowCpmTimestamp = T_now;
 	}*/
 
+	if (T_now - mLastSensorInformationTimestamp >= artery::simtime_cast(scSensorInformationContainerInterval)) {
+		EV_WARN << "SENSORINFORMATION";
+		addSensorInformationContainer(cpm);
+		mLastSensorInformationTimestamp = T_now;
+	}
 	using namespace vanetza;
 	btp::DataRequestB request;
 	request.destination_port = btp::ports::CAM;
@@ -261,7 +269,7 @@ vanetza::asn1::Cpm createCollectivePerceptionMessage(const VehicleDataProvider& 
 	//cpm.cpmParameters.sensorInformationContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__sensorInformationContainer>();
 	//cpm.cpmParameters.sensorInformationContainer->list
 
-	cpm.cpmParameters.sensorInformationContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__sensorInformationContainer>();
+	/*cpm.cpmParameters.sensorInformationContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__sensorInformationContainer>();
 
 	SensorInformation* sensorInformation = vanetza::asn1::allocate<SensorInformation>();
 	sensorInformation->id = 0;
@@ -276,7 +284,7 @@ vanetza::asn1::Cpm createCollectivePerceptionMessage(const VehicleDataProvider& 
 	sensorInformation->freeSpaceConfidence = vanetza::asn1::allocate<FreeSpaceConfidence_t>();
 	*(sensorInformation->freeSpaceConfidence) = FreeSpaceConfidence_unitConfidenceLevel;
 
-	ASN_SEQUENCE_ADD(cpm.cpmParameters.sensorInformationContainer, sensorInformation);
+	ASN_SEQUENCE_ADD(cpm.cpmParameters.sensorInformationContainer, sensorInformation);*/
 
 	cpm.cpmParameters.perceivedObjectContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__perceivedObjectContainer>();
 
@@ -336,7 +344,26 @@ vanetza::asn1::Cpm createCollectivePerceptionMessage(const VehicleDataProvider& 
 
 	return message;
 }
+void addSensorInformationContainer(vanetza::asn1::Cpm& message)
+{
+	message->cpm.cpmParameters.sensorInformationContainer = vanetza::asn1::allocate<CpmParameters::CpmParameters__sensorInformationContainer>();
 
+	SensorInformation* sensorInformation = vanetza::asn1::allocate<SensorInformation>();
+	sensorInformation->id = 0;
+	sensorInformation->type = SensorType_radar;
+	sensorInformation->detectionArea.present = DetectionArea_PR_stationarySensorCircular;
+	AreaCircular_t& stationarySensorCircular = sensorInformation->detectionArea.choice.stationarySensorCircular;
+	stationarySensorCircular.nodeCenterPoint = vanetza::asn1::allocate<OffsetPoint>();
+	stationarySensorCircular.nodeCenterPoint->nodeOffsetPointxy.present = NodeOffsetPointXYEU_PR_node_XY1;
+	stationarySensorCircular.nodeCenterPoint->nodeOffsetPointxy.choice.node_XY1.x = 1;
+	stationarySensorCircular.nodeCenterPoint->nodeOffsetPointxy.choice.node_XY1.y = 1;
+	stationarySensorCircular.radius = Radius_oneMeter;
+	sensorInformation->freeSpaceConfidence = vanetza::asn1::allocate<FreeSpaceConfidence_t>();
+	*(sensorInformation->freeSpaceConfidence) = FreeSpaceConfidence_unitConfidenceLevel;
+
+	ASN_SEQUENCE_ADD(message->cpm.cpmParameters.sensorInformationContainer, sensorInformation);
+
+}
 /*void addLowFrequencyContainer(vanetza::asn1::Cpm& message)
 {
 	LowFrequencyContainer_t*& lfc = message->cpm.cpmParameters.lowFrequencyContainer;
