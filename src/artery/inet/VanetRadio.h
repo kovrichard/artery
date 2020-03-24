@@ -24,7 +24,7 @@ public:
     static const omnetpp::simsignal_t RadioFrameSignal;
 
 protected:
-    void handleLowerPacket(inet::physicallayer::RadioFrame*) override;
+    void handleSignal(inet::physicallayer::Signal*) override;
 };
 
 } // namespace artery

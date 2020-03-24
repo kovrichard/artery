@@ -15,9 +15,9 @@ Define_Module(VanetRadio)
 
 const omnetpp::simsignal_t VanetRadio::RadioFrameSignal = omnetpp::cComponent::registerSignal("RadioFrame");
 
-void VanetRadio::handleLowerPacket(inet::physicallayer::RadioFrame* frame)
+void VanetRadio::handleSignal(inet::physicallayer::Signal* frame)
 {
-    phy::Ieee80211Radio::handleLowerPacket(frame);
+    phy::Ieee80211Radio::handleSignal(frame);
     emit(RadioFrameSignal, frame);
 }
 

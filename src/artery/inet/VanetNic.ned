@@ -12,7 +12,7 @@ module VanetNic extends Ieee80211Interface
         mac.qosStation = true;
         mac.rx.typename = default("ChannelLoadRx");
 
-        radio.bandName = "5.9 GHz";
+        radio.bandName = "5 GHz";
         radio.bandwidth = 10 MHz;
         radio.channelNumber = default(4);
         radio.carrierFrequency = default(5.9 GHz);

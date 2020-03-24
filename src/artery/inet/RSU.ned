@@ -33,7 +33,7 @@ module RSU like INetworkNode
         wlan[numRadios]: <default("VanetNic")> like IWirelessInterface {
             parameters:
                 @display("p=216,406,row,60;q=queue");
-                radio.antenna.mobilityModule = absPath("^.mobility");
+                radio.antenna.mobilityModule = withAntennaMobility ?
                     ".antennaMobility[" + string(index) + "]" : ".mobility";
         }
 
