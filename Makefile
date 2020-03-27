@@ -6,6 +6,7 @@ VANETZA_DIR = extern/vanetza
 VANETZA_BUILD_TYPE ?= Release
 VANETZA_BUILD_DIR ?= $(VANETZA_DIR)/build
 VEINS_DIR = extern/veins
+OPP_FEATURETOOL = $(shell which opp_featuretool)
 
 all: inet vanetza veins
 
@@ -15,7 +16,7 @@ clean:
 	-rm -rf $(VANETZA_BUILD_DIR)
 
 $(INET_DIR)/.oppfeaturestate: $(INET_DIR)/.oppfeatures
-	cd $(INET_DIR); $(PYTHON) bin/inet_featuretool repair
+	cd $(INET_DIR);  $(PYTHON) $(OPP_FEATURETOOL) repair
 
 $(INET_DIR)/src/Makefile: $(INET_DIR)/.oppfeaturestate
 	$(MAKE) -C $(INET_DIR) makefiles

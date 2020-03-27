@@ -14,10 +14,11 @@ void AntennaMobility::initialize(int stage)
     mOffsetCoord.x = par("offsetX");
     mOffsetCoord.y = par("offsetY");
     mOffsetCoord.z = par("offsetZ");
-    mOffsetAngles.alpha = inet::rad(par("offsetAlpha"));
-    mOffsetAngles.beta = inet::rad(par("offsetBeta"));
-    mOffsetAngles.gamma = inet::rad(par("offsetGamma"));
-    mOffsetRotation = inet::Rotation(mOffsetAngles);
+    auto alpha = inet::rad(par("offsetAlpha"));
+    auto beta = inet::rad(par("offsetBeta"));
+    auto gamma = inet::rad(par("offsetGamma"));
+    mOffsetAngles = inet::Quaternion(inet::EulerAngles(alpha, beta, gamma));
+    mOffsetRotation = inet::RotationMatrix(mOffsetAngles.toEulerAngles());
 }
 
 int AntennaMobility::numInitStages() const
@@ -32,9 +33,9 @@ double AntennaMobility::getMaxSpeed() const
 
 inet::Coord AntennaMobility::getCurrentPosition()
 {
-    inet::EulerAngles angular_pos = mParentMobility->getCurrentAngularPosition();
+    inet::EulerAngles angular_pos = mParentMobility->getCurrentAngularPosition().toEulerAngles();
     std::swap(angular_pos.alpha, angular_pos.gamma);
-    inet::Rotation rot(angular_pos);
+    inet::RotationMatrix rot(angular_pos);
     inet::Coord rotated_offset = rot.rotateVector(mOffsetCoord);
     return mParentMobility->getCurrentPosition() + rotated_offset;
 }
@@ -49,29 +50,33 @@ inet::Coord AntennaMobility::getCurrentAcceleration()
     return mOffsetRotation.rotateVector(mParentMobility->getCurrentAcceleration());
 }
 
-inet::EulerAngles AntennaMobility::getCurrentAngularPosition()
+inet::Quaternion AntennaMobility::getCurrentAngularPosition()
 {
     return mParentMobility->getCurrentAngularPosition() + mOffsetAngles;
 }
 
-inet::EulerAngles AntennaMobility::getCurrentAngularVelocity()
+// TODO conversion will cause near zero values
+inet::Quaternion AntennaMobility::getCurrentAngularVelocity()
 {
-    inet::EulerAngles speed = mParentMobility->getCurrentAngularVelocity();
-    if (speed.alpha != inet::rad(0.0) || speed.beta != inet::rad(0.0) || speed.gamma != inet::rad(0.0)) {
+    inet::Quaternion speed = mParentMobility->getCurrentAngularVelocity();
+    inet::EulerAngles speedAngles = speed.toEulerAngles();
+    if (speedAngles.alpha != inet::rad(0.0) || speedAngles.beta != inet::rad(0.0) || speedAngles.gamma != inet::rad(0.0)) {
         throw omnetpp::cRuntimeError("non-zero angular velocity is not supported");
     }
 
-    return inet::EulerAngles::ZERO;
+    return inet::Quaternion::IDENTITY;
 }
 
-inet::EulerAngles AntennaMobility::getCurrentAngularAcceleration()
+// TODO conversion will cause near zero values
+inet::Quaternion AntennaMobility::getCurrentAngularAcceleration()
 {
-    inet::EulerAngles speed = mParentMobility->getCurrentAngularAcceleration();
-    if (speed.alpha != inet::rad(0.0) || speed.beta != inet::rad(0.0) || speed.gamma != inet::rad(0.0)) {
+    inet::Quaternion speed = mParentMobility->getCurrentAngularAcceleration();
+    inet::EulerAngles speedAngles = speed.toEulerAngles();
+    if (speedAngles.alpha != inet::rad(0.0) || speedAngles.beta != inet::rad(0.0) || speedAngles.gamma != inet::rad(0.0)) {
         throw omnetpp::cRuntimeError("non-zero angular acceleration is not supported");
     }
 
-    return inet::EulerAngles::ZERO;
+    return inet::Quaternion::IDENTITY;
 }
 
 inet::Coord AntennaMobility::getConstraintAreaMax() const
