@@ -57,6 +57,8 @@ protected:
     int droppedPacketCounter = 0;
     int droppedBECounter = 0;
     int droppedBKCounter = 0;
+
+    omnetpp::cOutVector cbr_vector;
     
 };
 

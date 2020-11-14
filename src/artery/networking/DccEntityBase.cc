@@ -6,6 +6,7 @@
 #include "artery/utility/InitStages.h"
 #include "artery/utility/PointerCheck.h"
 #include "inet/common/ModuleAccess.h"
+#include "omnetpp/coutvector.h"
 #include <vanetza/dcc/hooked_channel_probe_processor.hpp>
 #include <vanetza/dcc/smoothing_channel_probe_processor.hpp>
 
@@ -20,6 +21,7 @@ void DccEntityBase::initialize(int stage)
         droppedPackets.setName("droppedPackets.dcc");
         droppedBE.setName("droppedBE");
         droppedBK.setName("droppedBK");
+        cbr_vector.setName("CBR.VanetRx");
 
         mTargetCbr = vanetza::dcc::ChannelLoad { par("targetCbr") };
         mRouter = inet::getModuleFromPar<Router>(par("routerModule"), this);
@@ -37,24 +39,24 @@ void DccEntityBase::initialize(int stage)
         mFlowControl.reset(new vanetza::dcc::FlowControl(*mRuntime, *trc, *mAccessInterface));
         mFlowControl->queue_length(par("queueLength"));
         mFlowControl->set_packet_drop_hook([this](vanetza::AccessCategory ac)
-        {
-            droppedPacketCounter++;
-            droppedPackets.record(droppedPacketCounter);
-            switch (ac)
-            {
-            case vanetza::AccessCategory::BE:
-                droppedBECounter++;
-                droppedBE.record(droppedBECounter);
-                break;
-            case vanetza::AccessCategory::BK:
-                droppedBKCounter++;
-                droppedBK.record(droppedBKCounter);
-                break;
-            default:
-                break;
-            }
-            EV_WARN << "ELDOBTAM HEHEHEHE\n" ;
-        });
+                        {
+                            droppedPacketCounter++;
+                            droppedPackets.record(droppedPacketCounter);
+                            switch (ac)
+                            {
+                            case vanetza::AccessCategory::BE:
+                                droppedBECounter++;
+                                droppedBE.record(droppedBECounter);
+                                break;
+                            case vanetza::AccessCategory::BK:
+                                droppedBKCounter++;
+                                droppedBK.record(droppedBKCounter);
+                                break;
+                            default:
+                                break;
+                            }
+                            EV_WARN << "ELDOBTAM HEHEHEHE\n" ;
+                        });
     }
 }
 
@@ -120,6 +122,8 @@ void DccEntityBase::initializeChannelProbeProcessor(const std::string& name)
 void DccEntityBase::reportLocalChannelLoad(vanetza::dcc::ChannelLoad cbr)
 {
     mCbrProcessor->indicate(cbr);
+
+    cbr_vector.record(cbr.value());
 }
 
 void DccEntityBase::onLocalCbr(vanetza::dcc::ChannelLoad cbr)

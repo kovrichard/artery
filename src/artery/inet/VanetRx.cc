@@ -1,5 +1,6 @@
 #include "artery/inet/VanetRx.h"
 #include <cstdint>
+#include "omnetpp/ccomponent.h"
 
 using namespace omnetpp;
 
@@ -65,6 +66,13 @@ void VanetRx::reportChannelLoad()
     channelBusyRatio /= total;
 
     emit(ChannelLoadSignal, channelBusyRatio);
+
+    // std::vector<cIListener*> listeners = getLocalSignalListeners(ChannelLoadSignal);
+    
+    // printf("SIZE: %d\n", listeners.size());
+
+    // cOutVector cbr("CBR.VanetRx");
+    // cbr.record(channelBusyRatio);
 }
 
 } // namespace artery
