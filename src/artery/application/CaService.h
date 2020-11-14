@@ -26,6 +26,7 @@
 #include <vanetza/units/angle.hpp>
 #include <vanetza/units/velocity.hpp>
 #include <omnetpp/simtime.h>
+#include <omnetpp/coutvector.h>
 
 namespace artery
 {
@@ -67,6 +68,15 @@ class CaService : public ItsG5BaseService
 		vanetza::units::Velocity mSpeedDelta;
 		bool mDccRestriction;
 		bool mFixedRate;
+
+		omnetpp::cOutVector timeIntervalMessages;
+        omnetpp::cOutVector CamSize;
+		omnetpp::cOutVector sendCamCases;
+		omnetpp::cOutVector sentCams;
+		omnetpp::cOutVector receivedCams;
+		
+		int sentCamCounter = 0;
+		int receivedCamCounter = 0;
 };
 
 vanetza::asn1::Cam createCooperativeAwarenessMessage(const VehicleDataProvider&, uint16_t genDeltaTime);

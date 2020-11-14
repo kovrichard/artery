@@ -17,6 +17,10 @@ namespace artery
 void DccEntityBase::initialize(int stage)
 {
     if (stage == InitStages::Prepare) {
+        droppedPackets.setName("droppedPackets.dcc");
+        droppedBE.setName("droppedBE");
+        droppedBK.setName("droppedBK");
+
         mTargetCbr = vanetza::dcc::ChannelLoad { par("targetCbr") };
         mRouter = inet::getModuleFromPar<Router>(par("routerModule"), this);
         mRuntime = inet::getModuleFromPar<Runtime>(par("runtimeModule"), this);
@@ -32,6 +36,25 @@ void DccEntityBase::initialize(int stage)
         auto trc = notNullPtr(getTransmitRateControl());
         mFlowControl.reset(new vanetza::dcc::FlowControl(*mRuntime, *trc, *mAccessInterface));
         mFlowControl->queue_length(par("queueLength"));
+        mFlowControl->set_packet_drop_hook([this](vanetza::AccessCategory ac)
+        {
+            droppedPacketCounter++;
+            droppedPackets.record(droppedPacketCounter);
+            switch (ac)
+            {
+            case vanetza::AccessCategory::BE:
+                droppedBECounter++;
+                droppedBE.record(droppedBECounter);
+                break;
+            case vanetza::AccessCategory::BK:
+                droppedBKCounter++;
+                droppedBK.record(droppedBKCounter);
+                break;
+            default:
+                break;
+            }
+            EV_WARN << "ELDOBTAM HEHEHEHE\n" ;
+        });
     }
 }
 

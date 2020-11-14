@@ -69,6 +69,12 @@ void CaService::initialize()
 
 	mDccRestriction = par("withDccRestriction");
 	mFixedRate = par("fixedRate");
+
+	timeIntervalMessages.setName("timeIntervalMessages");
+	CamSize.setName("CamSize");
+	sendCamCases.setName("sendCamCases");
+	sentCams.setName("sentCams");
+	receivedCams.setName("receivedCams");
 }
 
 void CaService::trigger()
@@ -82,6 +88,8 @@ void CaService::indicate(const vanetza::btp::DataIndication& ind, std::unique_pt
 	const vanetza::asn1::Cam* cam = boost::apply_visitor(visitor, *packet);
 	if (cam && cam->validate()) {
 		CaObject obj = visitor.shared_wrapper;
+		receivedCamCounter++;
+		receivedCams.record(receivedCamCounter);
 		emit(scSignalCamReceived, &obj);
 		mLocalDynamicMap->updateAwareness(obj);
 	}
@@ -98,12 +106,18 @@ void CaService::checkTriggeringConditions(const SimTime& T_now)
 
 	if (T_elapsed >= T_GenCamDcc) {
 		if (mFixedRate) {
+			sendCamCases.record(1);
+			timeIntervalMessages.record(T_elapsed);
 			sendCam(T_now);
 		} else if (checkHeadingDelta() || checkPositionDelta() || checkSpeedDelta()) {
+			sendCamCases.record(2);
+			timeIntervalMessages.record(T_elapsed);
 			sendCam(T_now);
 			T_GenCam = std::min(T_elapsed, T_GenCamMax); /*< if middleware update interval is too long */
 			mGenCamLowDynamicsCounter = 0;
 		} else if (T_elapsed >= T_GenCam) {
+			sendCamCases.record(3);
+			timeIntervalMessages.record(T_elapsed);
 			sendCam(T_now);
 			if (++mGenCamLowDynamicsCounter >= mGenCamLowDynamicsLimit) {
 				T_GenCam = T_GenCamMax;
@@ -129,6 +143,8 @@ bool CaService::checkSpeedDelta() const
 
 void CaService::sendCam(const SimTime& T_now)
 {
+	sentCamCounter++;
+	sentCams.record(sentCamCounter);
 	uint16_t genDeltaTimeMod = countTaiMilliseconds(mTimer->getTimeFor(mVehicleDataProvider->updated()));
 	auto cam = createCooperativeAwarenessMessage(*mVehicleDataProvider, genDeltaTimeMod);
 
@@ -157,6 +173,7 @@ void CaService::sendCam(const SimTime& T_now)
 	std::unique_ptr<geonet::DownPacket> payload { new geonet::DownPacket() };
 	std::unique_ptr<convertible::byte_buffer> buffer { new CamByteBuffer(obj.shared_ptr()) };
 	payload->layer(OsiLayer::Application) = std::move(buffer);
+	CamSize.record(payload->size());
 	this->request(request, std::move(payload));
 }
 
@@ -225,6 +242,40 @@ vanetza::asn1::Cam createCooperativeAwarenessMessage(const VehicleDataProvider& 
 			VehicleLengthConfidenceIndication_noTrailerPresent;
 	bvc.vehicleWidth = VehicleWidth_unavailable;
 
+//en voltam
+	bvc.accelerationControl = vanetza::asn1::allocate<AccelerationControl_t>();
+	bvc.accelerationControl->buf = static_cast<uint8_t*>(vanetza::asn1::allocate(1));
+	
+	assert(nullptr != bvc.accelerationControl->buf);
+	bvc.accelerationControl->size = 1;
+	bvc.accelerationControl->buf[0] |= 1 << (7 - ExteriorLights_daytimeRunningLightsOn);
+
+	bvc.lanePosition = vanetza::asn1::allocate<LanePosition_t>();
+	*(bvc.lanePosition) = LanePosition_offTheRoad;
+
+	bvc.steeringWheelAngle = vanetza::asn1::allocate<SteeringWheelAngle_t>();
+	bvc.steeringWheelAngle->steeringWheelAngleValue = SteeringWheelAngleValue_straight;
+	bvc.steeringWheelAngle->steeringWheelAngleConfidence = SteeringWheelAngleConfidence_equalOrWithinOnePointFiveDegree;
+
+	bvc.lateralAcceleration = vanetza::asn1::allocate<LateralAcceleration_t>();
+	bvc.lateralAcceleration->lateralAccelerationValue = LateralAccelerationValue_pointOneMeterPerSecSquaredToLeft;
+	bvc.lateralAcceleration->lateralAccelerationConfidence = AccelerationConfidence_pointOneMeterPerSecSquared;
+
+	bvc.verticalAcceleration = vanetza::asn1::allocate<VerticalAcceleration_t>();
+	bvc.verticalAcceleration->verticalAccelerationValue = VerticalAccelerationValue_pointOneMeterPerSecSquaredDown;
+	bvc.verticalAcceleration->verticalAccelerationConfidence = AccelerationConfidence_pointOneMeterPerSecSquared;
+	
+	bvc.performanceClass = vanetza::asn1::allocate<PerformanceClass_t>();
+	*(bvc.performanceClass) = PerformanceClass_performanceClassA;
+
+	bvc.cenDsrcTollingZone = vanetza::asn1::allocate<CenDsrcTollingZone_t>();
+	bvc.cenDsrcTollingZone->protectedZoneLatitude = Latitude_oneMicrodegreeNorth;
+	bvc.cenDsrcTollingZone->protectedZoneLongitude = Longitude_oneMicrodegreeEast;
+
+	bvc.cenDsrcTollingZone->cenDsrcTollingZoneID = vanetza::asn1::allocate<CenDsrcTollingZoneID_t>();
+	*(bvc.cenDsrcTollingZone->cenDsrcTollingZoneID) = 0;
+//eddig
+
 	std::string error;
 	if (!message.validate(error)) {
 		throw cRuntimeError("Invalid High Frequency CAM: %s", error.c_str());
@@ -241,10 +292,23 @@ void addLowFrequencyContainer(vanetza::asn1::Cam& message)
 	BasicVehicleContainerLowFrequency& bvc = lfc->choice.basicVehicleContainerLowFrequency;
 	bvc.vehicleRole = VehicleRole_default;
 	bvc.exteriorLights.buf = static_cast<uint8_t*>(vanetza::asn1::allocate(1));
+	
 	assert(nullptr != bvc.exteriorLights.buf);
 	bvc.exteriorLights.size = 1;
 	bvc.exteriorLights.buf[0] |= 1 << (7 - ExteriorLights_daytimeRunningLightsOn);
 	// TODO: add pathHistory
+
+//sum pathHistory
+		for (int i = 0; i < 23; ++i) {
+			PathPoint* pathPoint = vanetza::asn1::allocate<PathPoint>();
+			pathPoint->pathDeltaTime = vanetza::asn1::allocate<PathDeltaTime_t>();
+			*(pathPoint->pathDeltaTime) = 0;
+			pathPoint->pathPosition.deltaLatitude = DeltaLatitude_unavailable;
+			pathPoint->pathPosition.deltaLongitude = DeltaLongitude_unavailable;
+			pathPoint->pathPosition.deltaAltitude = DeltaAltitude_unavailable;
+			ASN_SEQUENCE_ADD(&bvc.pathHistory, pathPoint);
+		}
+
 
 	std::string error;
 	if (!message.validate(error)) {
