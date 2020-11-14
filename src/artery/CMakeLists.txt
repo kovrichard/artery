@@ -4,6 +4,8 @@ add_library(artery INTERFACE)
 add_library(core SHARED
     application/CaObject.cc
     application/CaService.cc
+    application/CpObject.cc
+    application/CpService.cc
     application/DenmObject.cc
     application/DenService.cc
     application/ExampleService.cc
