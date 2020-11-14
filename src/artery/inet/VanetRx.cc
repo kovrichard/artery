@@ -66,13 +66,10 @@ void VanetRx::reportChannelLoad()
     channelBusyRatio /= total;
 
     emit(ChannelLoadSignal, channelBusyRatio);
-
-    // std::vector<cIListener*> listeners = getLocalSignalListeners(ChannelLoadSignal);
     
-    // printf("SIZE: %d\n", listeners.size());
-
-    // cOutVector cbr("CBR.VanetRx");
-    // cbr.record(channelBusyRatio);
+    printf("Busy: %ld\n", busy);
+    printf("Total: %lu\n", total);
+    printf("---------------\n");
 }
 
 } // namespace artery

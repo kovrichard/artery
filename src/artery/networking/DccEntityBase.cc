@@ -79,6 +79,7 @@ void DccEntityBase::receiveSignal(cComponent*, simsignal_t signal, double value,
         ASSERT(value >= 0.0 && value <= 1.0);
         vanetza::dcc::ChannelLoad cl { value };
         reportLocalChannelLoad(cl);
+        printf("GOT: %f\n", value);
     }
 }
 
