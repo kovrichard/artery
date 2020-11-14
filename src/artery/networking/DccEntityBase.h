@@ -7,6 +7,7 @@
 #include <vanetza/geonet/dcc_information_sharing.hpp>
 #include <omnetpp/clistener.h>
 #include <omnetpp/csimplemodule.h>
+#include <omnetpp/coutvector.h>
 #include <memory>
 
 namespace artery
@@ -48,9 +49,17 @@ protected:
     Router* mRouter;
     vanetza::Runtime* mRuntime;
     std::unique_ptr<AccessInterface> mAccessInterface;
+
+    omnetpp::cOutVector droppedPackets;
+    omnetpp::cOutVector droppedBE;
+    omnetpp::cOutVector droppedBK;
+
+    int droppedPacketCounter = 0;
+    int droppedBECounter = 0;
+    int droppedBKCounter = 0;
+    
 };
 
 } // namespace artery
 
 #endif /* ARTERY_DCCENTITYBASE_H_VLQQNLKF */
-
